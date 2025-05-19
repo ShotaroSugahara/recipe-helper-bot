@@ -42,12 +42,14 @@ def handle_message(event):
 
     prompt = f"ユーザーの気分は「{user_msg}」。この気分に合うレシピを3つ提案してください。それぞれに、料理名、調理時間（★1〜5）、コスト（★1〜5）を含めてください。"
 
-    chat_completion = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    reply_text = chat_completion.choices[0].message.content
+    try:
+        chat_completion = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reply_text = chat_completion.choices[0].message.content
+    except Exception as e:
+        reply_text = f"[エラー発生]\n{str(e)}"
 
     line_bot_api.reply_message(
         event.reply_token,
