@@ -75,22 +75,20 @@ Be concise, clear, and beginner-friendly.
 """
 
 def build_flex_message(user_msg, recipes):
-    seen_labels = set()
+    seen_titles = set()
     buttons = []
     for i, item in enumerate(recipes):
-        title = item.get("title", "レシピ").strip().split("。", 1)[0].split(".", 1)[0][:20]  # 句読点・ピリオドで区切る
-        reason = item.get("reason", "").strip().split("。", 1)[0][:20]
-        label = f"{title}\n{reason}".strip()
+        title = item.get("title", "レシピ").strip().split("。", 1)[0].split(".", 1)[0][:20]
 
-        if not label or label in seen_labels:
+        if not title or title in seen_titles:
             continue
-        seen_labels.add(label)
+        seen_titles.add(title)
 
         buttons.append({
             "type": "button",
             "action": {
                 "type": "message",
-                "label": label,
+                "label": f"{i+1}. {title}",
                 "text": f"{i+1}"
             },
             "style": "primary",
