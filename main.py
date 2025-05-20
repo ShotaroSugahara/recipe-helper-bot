@@ -1,6 +1,3 @@
-from pathlib import Path
-
-main_py_code = """
 import os
 import time
 from flask import Flask, request, abort
@@ -19,7 +16,6 @@ line_bot_api = LineBotApi(os.environ["LINE_CHANNEL_ACCESS_TOKEN"])
 handler = WebhookHandler(os.environ["LINE_CHANNEL_SECRET"])
 openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# ユーザーごとのセッション状態（メモリ上） key: user_id, value: list of recipes
 user_sessions = {}
 
 def generate_recipe_prompt(user_msg):
@@ -30,7 +26,7 @@ def generate_recipe_prompt(user_msg):
     else:
         category = "Japanese meals"
 
-    prompt = f\"\"\"
+    prompt = f"""
 The user says: "{user_msg}"
 Please suggest 5 {category} based on this mood.
 Each suggestion must include:
@@ -41,11 +37,11 @@ Respond only in Japanese.
 Avoid generic items like coffee, udon, or somen unless user asked.
 Avoid drinks or desserts unless requested.
 Use common ingredients and simple ideas, but make at least one feel new or clever.
-\"\"\"
+"""
     return prompt
 
 def generate_detail_prompt(title):
-    return f\"\"\"
+    return f"""
 Please provide a detailed Japanese recipe for the following dish:
 
 {title}
@@ -56,7 +52,7 @@ Include:
 - list of ingredients
 - preparation steps
 Respond only in Japanese.
-\"\"\"
+"""
 
 def build_flex_message(recipes):
     contents = {
@@ -110,7 +106,6 @@ def handle_message(event):
     user_msg = event.message.text.strip()
 
     if user_id in user_sessions:
-        # ユーザーが料理を選んだと判定
         if user_msg.isdigit():
             index = int(user_msg) - 1
             if 0 <= index < len(user_sessions[user_id]):
@@ -134,13 +129,11 @@ def handle_message(event):
                 del user_sessions[user_id]
                 return
 
-    # ステータス：受信確認
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text="メッセージ受け取りました。考え中です…🤔")
     )
 
-    # GPTへ問い合わせ
     try:
         start = time.time()
         prompt = generate_recipe_prompt(user_msg)
@@ -151,8 +144,7 @@ def handle_message(event):
         content = response.choices[0].message.content.strip()
         elapsed = time.time() - start
 
-        # 応答を5個にパース
-        lines = content.split("\\n")
+        lines = content.split("\n")
         recipes = []
         for line in lines:
             if line.strip() == "":
@@ -167,10 +159,7 @@ def handle_message(event):
         user_sessions[user_id] = recipes[:5]
         flex_msg = build_flex_message(user_sessions[user_id])
 
-        if elapsed > 10:
-            status_note = "（少しお待たせしました。Botが寝てたかも…💤）"
-        else:
-            status_note = ""
+        status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
 
         line_bot_api.push_message(
             user_id,
@@ -181,4 +170,3 @@ def handle_message(event):
             user_id,
             TextSendMessage(text="ちょっと調子が悪いみたいです💦 また後で試してみてください🙏")
         )
-"""
