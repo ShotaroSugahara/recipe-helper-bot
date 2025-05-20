@@ -77,9 +77,9 @@ Be concise, clear, and beginner-friendly.
 def build_flex_message(user_msg, recipes):
     buttons = []
     for i, item in enumerate(recipes):
-        title = item.get("title", "").strip()[:8]  # タイトル短縮
-        reason = item.get("reason", "").strip()[:10]  # 理由から10文字以内
-        label = f"{i+1}. {title} {reason}"
+        comment = item.get("reason", "")[:10].strip()
+        title = item.get("title", "")[:8].strip()
+        label = f"{i+1}. {comment or title}"
 
         buttons.append({
             "type": "button",
@@ -193,18 +193,11 @@ def handle_message(event):
 
         status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
 
-        line_bot_api.push_message(
-                  user_sessions[user_id] = recipes[:5]
-        flex_msg = build_flex_message(user_msg, user_sessions[user_id])
+        messages = [flex_msg]
+        if status_note:
+            messages.insert(0, TextSendMessage(text=status_note))
 
-        status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
-
-        line_bot_api.push_message(
-            user_id,
-            [TextSendMessage(text=f"{status_note}"), flex_msg]  # ←ここが問題
-        )
-
-        )
+        line_bot_api.push_message(user_id, messages)
     except Exception as e:
         print(f"❌ GPTエラー発生: {e}")
         line_bot_api.push_message(
