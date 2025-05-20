@@ -194,8 +194,16 @@ def handle_message(event):
         status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
 
         line_bot_api.push_message(
+                  user_sessions[user_id] = recipes[:5]
+        flex_msg = build_flex_message(user_msg, user_sessions[user_id])
+
+        status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
+
+        line_bot_api.push_message(
             user_id,
-            [TextSendMessage(text=f"{status_note}"), flex_msg]
+            [TextSendMessage(text=f"{status_note}"), flex_msg]  # ←ここが問題
+        )
+
         )
     except Exception as e:
         print(f"❌ GPTエラー発生: {e}")
