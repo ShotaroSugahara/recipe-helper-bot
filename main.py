@@ -42,16 +42,24 @@ Use common ingredients and simple ideas, but make at least one feel new or cleve
 
 def generate_detail_prompt(title):
     return f"""
-Please provide a detailed Japanese recipe for the following dish:
+You are a Japanese cooking expert. Please write a full Japanese-language recipe for the following dish:
 
-{title}
+【Dish】{title}
 
-Include:
-- estimated cooking time (★1 to 5)
-- estimated cost (★1 to 5)
-- list of ingredients
-- preparation steps
-Respond only in Japanese.
+Please include the following:
+
+1. How many servings the recipe makes (e.g., 2〜3人前)
+2. List of ingredients using simple units (e.g., "a little", "1 handful", "1 piece" — avoid grams/ml)
+3. Step-by-step instructions
+   - For each step, explain briefly **why** it's done (e.g., "Start with the skin side to make it crispy")
+4. At the end, add a short bonus section with a fun or useful fact about the dish.
+   - Use a casual, modern tone
+   - Start with a catchy phrase like one of the following (pick randomly):
+     「料理の小ネタ」, 「知ってると話したくなる話」, 「この料理、実は…」, 「ちょこっと豆知識」, 「豆メモ」
+
+Important:
+- Output must be entirely in Japanese.
+- Keep the tone friendly, easy, and suitable for home cooks.
 """
 
 def build_flex_message(recipes):
