@@ -182,8 +182,3 @@ def handle_message(event):
             TextSendMessage(text="ちょっと調子が悪いみたいです💦 また後で試してみてください🙏")
         )
 """
-
-# ファイルに保存
-
-
-file_path.name
