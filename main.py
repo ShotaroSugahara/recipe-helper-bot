@@ -19,6 +19,28 @@ openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 user_sessions = {}
 
+def generate_recipe_prompt(user_msg):
+    if "スイーツ" in user_msg or "デザート" in user_msg:
+        category = "Japanese desserts"
+    elif "ドリンク" in user_msg or "飲み物" in user_msg:
+        category = "Japanese drinks"
+    else:
+        category = "Japanese meals"
+
+    prompt = f"""
+The user says: "{user_msg}"
+Please suggest 5 {category} based on this mood.
+Each suggestion must include:
+- title
+- a brief reason why it fits the mood
+
+Respond only in Japanese.
+Avoid generic items like coffee, udon, or somen unless user asked.
+Avoid drinks or desserts unless requested.
+Use common ingredients and simple ideas, but make at least one feel new or clever.
+"""
+    return prompt
+
 def generate_detail_prompt(title):
     return f"""
 You are a Japanese cooking expert. Please write a full recipe for the following item.
@@ -41,7 +63,7 @@ Recipe should include:
    - If the recipe allows shortcuts (e.g., pre-made tempura for tendon), include that as an option
 4. At the end, include a fun or useful fact about the dish
    - Make it light and friendly
-   - Start with one of the following headers (choose randomly):
+   - Start with one of the following headers (choose randomly): 
      「料理の小ネタ」, 「知ってると話したくなる話」, 「この料理、実は…」, 「ちょこっと豆知識」, 「豆メモ」
 
 This rule applies to:
@@ -68,7 +90,6 @@ def build_flex_message(user_msg, recipes):
             "margin": "sm"
         })
 
-    # 本文表示用（理由も含めた文章）
     reasons_text = "\n".join([
         f"{i+1}. {item['title']}\n{item['reason'].strip()}"
         for i, item in enumerate(recipes)
@@ -105,16 +126,19 @@ def build_flex_message(user_msg, recipes):
     }
 
     return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
+
 @app.route("/callback", methods=["POST"])
 def callback():
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
-
-    # 非同期スレッドで処理（↓この関数を後で定義します）
     threading.Thread(target=handle_event_async, args=(body, signature)).start()
-
-    # すぐ200 OKを返す（これがLINE要件）
     return "OK"
+
+def handle_event_async(body, signature):
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        print("❌ Invalid signature")
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -128,6 +152,7 @@ def handle_message(event):
                 selected = user_sessions[user_id][index]
                 detail_prompt = generate_detail_prompt(selected["title"])
                 try:
+                    print("🔁 GPTに詳細レシピを問い合わせ中...")
                     reply = openai_client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": detail_prompt}]
@@ -138,6 +163,7 @@ def handle_message(event):
                         TextSendMessage(text=f"{selected['title']} の作り方です：\n\n{detailed_recipe}")
                     )
                 except Exception as e:
+                    print(f"❌ GPTエラー発生: {e}")
                     line_bot_api.reply_message(
                         event.reply_token,
                         TextSendMessage(text="レシピ取得に失敗しました。後でもう一度お試しください。")
@@ -165,7 +191,7 @@ def handle_message(event):
         for line in lines:
             if line.strip() == "":
                 continue
-            if line.startswith(tuple("12345")):
+            if line[0].isdigit():
                 parts = line.split("：", 1) if "：" in line else line.split(":", 1)
                 title = parts[1].strip() if len(parts) > 1 else line
                 recipes.append({"title": title, "reason": ""})
@@ -173,7 +199,7 @@ def handle_message(event):
                 recipes[-1]["reason"] += line.strip() + " "
 
         user_sessions[user_id] = recipes[:5]
-        flex_msg = build_flex_message(user_sessions[user_id])
+        flex_msg = build_flex_message(user_msg, user_sessions[user_id])
 
         status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
 
@@ -182,13 +208,8 @@ def handle_message(event):
             [TextSendMessage(text=f"気分に合いそうなレシピを5つ提案します！{status_note}"), flex_msg]
         )
     except Exception as e:
+        print(f"❌ GPTエラー発生: {e}")
         line_bot_api.push_message(
             user_id,
             TextSendMessage(text="ちょっと調子が悪いみたいです💦 また後で試してみてください🙏")
         )
-def handle_event_async(body, signature):
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        print("Invalid signature. Cannot handle event.")
-
