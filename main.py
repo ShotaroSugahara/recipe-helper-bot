@@ -1,5 +1,6 @@
 import os
 import time
+import threading
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -112,14 +113,16 @@ def build_flex_message(recipes):
 
     return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
 
+
 @app.route("/callback", methods=["POST"])
 def callback():
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
+
+    # 非同期スレッドで処理（↓この関数を後で定義します）
+    threading.Thread(target=handle_event_async, args=(body, signature)).start()
+
+    # すぐ200 OKを返す（これがLINE要件）
     return "OK"
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -192,3 +195,9 @@ def handle_message(event):
             user_id,
             TextSendMessage(text="ちょっと調子が悪いみたいです💦 また後で試してみてください🙏")
         )
+def handle_event_async(body, signature):
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        print("Invalid signature. Cannot handle event.")
+
