@@ -77,8 +77,8 @@ Be concise, clear, and beginner-friendly.
 def build_flex_message(user_msg, recipes):
     buttons = []
     for i, item in enumerate(recipes):
-        title = item["title"][:8]  # 料理名を短縮
         comment = item.get("reason", "")[:10].strip()
+        title = item.get("title", "")[:8].strip()
         label = f"{i+1}. {comment or title}"
 
         buttons.append({
@@ -195,7 +195,7 @@ def handle_message(event):
 
         line_bot_api.push_message(
             user_id,
-            [TextSendMessage(text=f"気分に合いそうなレシピを5つ提案します！{status_note}"), flex_msg]
+            [TextSendMessage(text=f"{status_note}"), flex_msg]
         )
     except Exception as e:
         print(f"❌ GPTエラー発生: {e}")
