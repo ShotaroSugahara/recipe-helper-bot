@@ -77,9 +77,9 @@ Be concise, clear, and beginner-friendly.
 def build_flex_message(user_msg, recipes):
     buttons = []
     for i, item in enumerate(recipes):
-        comment = item.get("reason", "")[:10].strip()
-        title = item.get("title", "")[:8].strip()
-        label = f"{i+1}. {comment or title}"
+        title = item.get("title", "").strip()[:8]  # タイトル短縮
+        reason = item.get("reason", "").strip()[:10]  # 理由から10文字以内
+        label = f"{i+1}. {title} {reason}"
 
         buttons.append({
             "type": "button",
