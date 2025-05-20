@@ -184,7 +184,6 @@ def handle_message(event):
 """
 
 # ファイルに保存
-file_path = Path("/mnt/data/main_stateful_flex.py")
-file_path.write_text(main_py_code)
+
 
 file_path.name
