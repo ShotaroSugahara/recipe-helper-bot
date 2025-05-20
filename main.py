@@ -1,3 +1,6 @@
+# version: v1.8.0
+# description: LINEレシピBot本体コード。GPT-3.5を使って気分に合う5つの料理を提案し、選ばれた1つの詳細レシピを返す。ボタンは料理名のみ表示、Flexで縦並び。サマリーも表示可。
+
 import os
 import time
 import threading
@@ -79,8 +82,7 @@ def build_flex_message(user_msg, recipes):
     seen_titles = set()
     buttons = []
     for i, item in enumerate(recipes):
-        title = item.get("title", "レシピ").strip()
-        title = title.lstrip("12345.：: ")[:20]  # 先頭の番号・句点など除去
+        title = item.get("title", "レシピ").strip().split("。", 1)[0].split(".", 1)[0][:20]
 
         if not title or title in seen_titles:
             continue
@@ -97,7 +99,30 @@ def build_flex_message(user_msg, recipes):
             "margin": "sm"
         })
 
-    ...
+    bubble = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"「{user_msg}」にぴったりなレシピ、選んでね👇",
+                    "weight": "bold",
+                    "size": "md",
+                    "wrap": True
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": buttons
+        }
+    }
+
+    return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
 
 @app.route("/callback", methods=["POST"])
 def callback():
@@ -165,10 +190,17 @@ def handle_message(event):
                 continue
             if line[0].isdigit():
                 parts = line.split("：", 1) if "：" in line else line.split(":", 1)
-                title = parts[1].strip() if len(parts) > 1 else line
+                if len(parts) > 1:
+                    title = parts[1].strip().split("。", 1)[0].split(".", 1)[0]
+                else:
+                    title = parts[0].strip()
                 recipes.append({"title": title, "reason": ""})
             elif recipes:
                 recipes[-1]["reason"] += line.strip() + " "
+
+        # Remove trailing whitespace from reason
+        for r in recipes:
+            r["reason"] = r["reason"].strip()
 
         user_sessions[user_id] = recipes[:5]
         flex_msg = build_flex_message(user_msg, user_sessions[user_id])
