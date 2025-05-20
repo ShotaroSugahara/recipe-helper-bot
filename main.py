@@ -33,6 +33,7 @@ Please suggest 5 {category} based on this mood.
 Each suggestion must include:
 - title
 - a brief reason why it fits the mood
+- one overall summary sentence (1 short line) about the general theme of the suggestions, such as "These recipes are refreshing and help cool down on a hot day."
 
 Respond only in Japanese.
 Avoid generic items like coffee, udon, or somen unless user asked.
@@ -194,12 +195,14 @@ def handle_message(event):
         user_sessions[user_id] = recipes[:5]
         flex_msg = build_flex_message(user_msg, user_sessions[user_id])
 
-        status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
+        summary_line = ""
+        if recipes and recipes[-1]['reason'].startswith("全体の傾向："):
+            summary_line = recipes.pop()['reason'].replace("全体の傾向：", "")
 
-        if status_note:
+        if summary_line:
             line_bot_api.push_message(
                 user_id,
-                [TextSendMessage(text=status_note), flex_msg]
+                [TextSendMessage(text=summary_line), flex_msg]
             )
         else:
             line_bot_api.push_message(
