@@ -4,6 +4,7 @@
 import os
 import time
 import threading
+import re  # ファイル上部に追加
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -81,8 +82,11 @@ Be concise, clear, and beginner-friendly.
 def build_flex_message(user_msg, recipes):
     seen_titles = set()
     buttons = []
+
     for i, item in enumerate(recipes):
-        title = item.get("title", "レシピ").strip().split("。", 1)[0].split(".", 1)[0][:20]
+        raw_title = item.get("title", "レシピ").strip()
+        # 先頭の番号・句読点（例: 1. 明太子パスタ）を除去
+        title = re.sub(r"^[0-9]+[.:：\\s]*", "", raw_title)[:20]
 
         if not title or title in seen_titles:
             continue
