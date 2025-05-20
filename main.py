@@ -77,8 +77,10 @@ Be concise, clear, and beginner-friendly.
 def build_flex_message(user_msg, recipes):
     buttons = []
     for i, item in enumerate(recipes):
-        comment = item.get("reason", "")[:10].strip() or "おすすめ"
-        label = f"{i+1}. {comment}"
+        title = item["title"][:8]  # 料理名を短縮
+        comment = item.get("reason", "")[:10].strip()
+        label = f"{i+1}. {comment or title}"
+
         buttons.append({
             "type": "button",
             "action": {
@@ -90,11 +92,6 @@ def build_flex_message(user_msg, recipes):
             "margin": "sm"
         })
 
-    reasons_text = "\n".join([
-        f"{i+1}. {item['title']}\n{item['reason'].strip()}"
-        for i, item in enumerate(recipes)
-    ])
-
     bubble = {
         "type": "bubble",
         "body": {
@@ -103,17 +100,10 @@ def build_flex_message(user_msg, recipes):
             "contents": [
                 {
                     "type": "text",
-                    "text": f"「{user_msg}」に合いそうなレシピはこちら！",
+                    "text": f"「{user_msg}」にぴったりなレシピ、選んでね👇",
                     "weight": "bold",
                     "size": "md",
                     "wrap": True
-                },
-                {
-                    "type": "text",
-                    "text": reasons_text,
-                    "size": "sm",
-                    "wrap": True,
-                    "margin": "md"
                 }
             ]
         },
