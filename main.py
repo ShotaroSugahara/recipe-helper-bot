@@ -52,10 +52,11 @@ This rule applies to:
 Be concise, clear, and beginner-friendly.
 """
 
-def build_flex_message(recipes):
+def build_flex_message(user_msg, recipes):
     buttons = []
     for i, item in enumerate(recipes):
-        label = f"{i+1}. {item['title']}"
+        comment = item.get("reason", "")[:10].strip() or "おすすめ"
+        label = f"{i+1}. {comment}"
         buttons.append({
             "type": "button",
             "action": {
@@ -67,7 +68,11 @@ def build_flex_message(recipes):
             "margin": "sm"
         })
 
-    reasons_text = "\n".join([f"{i+1}. {item['title']}\n{item['reason']}" for i, item in enumerate(recipes)])
+    # 本文表示用（理由も含めた文章）
+    reasons_text = "\n".join([
+        f"{i+1}. {item['title']}\n{item['reason'].strip()}"
+        for i, item in enumerate(recipes)
+    ])
 
     bubble = {
         "type": "bubble",
@@ -77,11 +82,10 @@ def build_flex_message(recipes):
             "contents": [
                 {
                     "type": "text",
-                    "text": "以下からレシピを選んでください 🍽",
+                    "text": f"「{user_msg}」に合いそうなレシピはこちら！",
                     "weight": "bold",
                     "size": "md",
-                    "wrap": True,
-                    "margin": "none"
+                    "wrap": True
                 },
                 {
                     "type": "text",
@@ -101,8 +105,6 @@ def build_flex_message(recipes):
     }
 
     return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
-
-
 @app.route("/callback", methods=["POST"])
 def callback():
     signature = request.headers["X-Line-Signature"]
