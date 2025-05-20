@@ -79,7 +79,8 @@ def build_flex_message(user_msg, recipes):
     seen_titles = set()
     buttons = []
     for i, item in enumerate(recipes):
-        title = item.get("title", "レシピ").strip().split("。", 1)[0].split(".", 1)[0][:20]
+        title = item.get("title", "レシピ").strip()
+        title = title.lstrip("12345.：: ")[:20]  # 先頭の番号・句点など除去
 
         if not title or title in seen_titles:
             continue
@@ -96,30 +97,7 @@ def build_flex_message(user_msg, recipes):
             "margin": "sm"
         })
 
-    bubble = {
-        "type": "bubble",
-        "body": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                {
-                    "type": "text",
-                    "text": f"「{user_msg}」にぴったりなレシピ、選んでね👇",
-                    "weight": "bold",
-                    "size": "md",
-                    "wrap": True
-                }
-            ]
-        },
-        "footer": {
-            "type": "box",
-            "layout": "vertical",
-            "spacing": "sm",
-            "contents": buttons
-        }
-    }
-
-    return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
+    ...
 
 @app.route("/callback", methods=["POST"])
 def callback():
