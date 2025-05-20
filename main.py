@@ -63,40 +63,54 @@ Important:
 """
 
 def build_flex_message(recipes):
-    contents = {
-        "type": "carousel",
-        "contents": []
-    }
-
+    buttons = []
     for i, item in enumerate(recipes):
-        contents["contents"].append({
-            "type": "bubble",
-            "size": "kilo",
-            "body": {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                    {"type": "text", "text": f"{i+1}. {item['title']}", "weight": "bold", "wrap": True},
-                    {"type": "text", "text": item['reason'], "size": "sm", "wrap": True, "margin": "md"}
-                ]
+        label = f"{i+1}. {item['title']}"
+        buttons.append({
+            "type": "button",
+            "action": {
+                "type": "message",
+                "label": label,
+                "text": f"{i+1}"
             },
-            "footer": {
-                "type": "box",
-                "layout": "vertical",
-                "spacing": "sm",
-                "contents": [{
-                    "type": "button",
-                    "action": {
-                        "type": "message",
-                        "label": "これにする",
-                        "text": f"{i+1}"
-                    },
-                    "style": "primary"
-                }]
-            }
+            "style": "primary",
+            "margin": "sm"
         })
 
-    return FlexSendMessage(alt_text="料理の提案です", contents={"type": "carousel", "contents": contents["contents"]})
+    reasons_text = "\n".join([f"{i+1}. {item['title']}\n{item['reason']}" for i, item in enumerate(recipes)])
+
+    bubble = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": "以下からレシピを選んでください 🍽",
+                    "weight": "bold",
+                    "size": "md",
+                    "wrap": True,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": reasons_text,
+                    "size": "sm",
+                    "wrap": True,
+                    "margin": "md"
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": buttons
+        }
+    }
+
+    return FlexSendMessage(alt_text="レシピの提案です", contents=bubble)
 
 @app.route("/callback", methods=["POST"])
 def callback():
