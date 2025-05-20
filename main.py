@@ -19,48 +19,37 @@ openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 user_sessions = {}
 
-def generate_recipe_prompt(user_msg):
-    if "スイーツ" in user_msg or "デザート" in user_msg:
-        category = "Japanese desserts"
-    elif "ドリンク" in user_msg or "飲み物" in user_msg:
-        category = "Japanese drinks"
-    else:
-        category = "Japanese meals"
-
-    prompt = f"""
-The user says: "{user_msg}"
-Please suggest 5 {category} based on this mood.
-Each suggestion must include:
-- title
-- a brief reason why it fits the mood
-
-Respond only in Japanese.
-Avoid generic items like coffee, udon, or somen unless user asked.
-Avoid drinks or desserts unless requested.
-Use common ingredients and simple ideas, but make at least one feel new or clever.
-"""
-    return prompt
-
 def generate_detail_prompt(title):
     return f"""
-You are a Japanese cooking expert. Please write a full Japanese-language recipe for the following dish:
+You are a Japanese cooking expert. Please write a full recipe for the following item.
 
 【Dish】{title}
 
-Please include the following:
+Language rules:
+- If the title is in Japanese, respond entirely in Japanese.
+- If the title is in English, respond entirely in English.
 
-1. How many servings the recipe makes (e.g., 2〜3人前)
-2. List of ingredients using simple units (e.g., "a little", "1 handful", "1 piece" — avoid grams/ml)
-3. Step-by-step instructions
-   - For each step, explain briefly **why** it's done (e.g., "Start with the skin side to make it crispy")
-4. At the end, add a short bonus section with a fun or useful fact about the dish.
-   - Use a casual, modern tone
-   - Start with a catchy phrase like one of the following (pick randomly):
+Recipe should include:
+
+1. How many servings it makes (e.g., 2〜3人前)
+2. List of ingredients using simple units:
+   - Use friendly measurements like "a little", "1 handful", "1 piece"
+   - Avoid using grams (g), milliliters (ml), or complex cooking terms
+3. Step-by-step instructions (max 7 steps):
+   - Add brief explanations **only where it's especially helpful or interesting**
+     (e.g., "Start with skin side down to make it crispy")
+   - If the recipe allows shortcuts (e.g., pre-made tempura for tendon), include that as an option
+4. At the end, include a fun or useful fact about the dish
+   - Make it light and friendly
+   - Start with one of the following headers (choose randomly):
      「料理の小ネタ」, 「知ってると話したくなる話」, 「この料理、実は…」, 「ちょこっと豆知識」, 「豆メモ」
 
-Important:
-- Output must be entirely in Japanese.
-- Keep the tone friendly, easy, and suitable for home cooks.
+This rule applies to:
+- Meals
+- Desserts (スイーツ / sweets)
+- Drinks (ドリンク / beverages)
+
+Be concise, clear, and beginner-friendly.
 """
 
 def build_flex_message(recipes):
