@@ -193,11 +193,16 @@ def handle_message(event):
 
         status_note = "（少しお待たせしました。Botが寝てたかも…💤）" if elapsed > 10 else ""
 
-        messages = [flex_msg]
         if status_note:
-            messages.insert(0, TextSendMessage(text=status_note))
-
-        line_bot_api.push_message(user_id, messages)
+            line_bot_api.push_message(
+                user_id,
+                [TextSendMessage(text=status_note), flex_msg]
+            )
+        else:
+            line_bot_api.push_message(
+                user_id,
+                [flex_msg]
+            )
     except Exception as e:
         print(f"❌ GPTエラー発生: {e}")
         line_bot_api.push_message(
